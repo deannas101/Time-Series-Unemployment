@@ -21,10 +21,9 @@ abline(h = 0)
 
 # Deterministic Trend: Assumption Checking ------------------------------------
 model1 <- lm(unemployment$MIHOUG1URN ~ unemployment$DATE) # linear regression model
-plot(ts(resid(model1), start = c(2011, 1), freq = 12)) # time-series plot of residuals from regression model
+plot(rstandard(model1), type="l") # time series of residuals
 abline(h = 0, col = 2)
-plot(rstandard(model1)) # standard residual plot
-abline(h = 0, col = 2)
+hist(resid(model1))
 
 qqnorm(resid(model1)) # plot to check normality
 qqline(resid(model1))
@@ -37,49 +36,36 @@ acf(resid(model1)) # ACF plot (independence)
 # Seasonal means model --------------------------------------------------------
 unemployment_ts <- ts(unemployment$MIHOUG1URN, freq = 12)
 month <- season(unemployment_ts)
-model2 <- lm(unemployment_ts ~ month)
+tm <- time(unemployment_ts)
+model2 <- lm(unemployment_ts ~ month + tm)
 
 lx1 <- ts(resid(model2), start = c(2011, 1), freq = 12)
 plot(lx1)
 
-AIC(model2)
-AICc(model2)
-BIC(model2)
+summary(model2)
 
 # Cosine trends model ---------------------------------------------------------
 har <- harmonic(unemployment_ts, 1)
-model3 <- lm(unemployment_ts ~ har)
+model3 <- lm(unemployment_ts ~ har + tm)
 summary(model3)
-
-AIC(model3)
-AICc(model3)
-BIC(model3)
 
 # SARIMA ----------------------------------------------------------------------
 tm <- time(unemployment_ts)
-tm2 <- time(unemployment_ts)^2
-model0 <- lm(unemployment_ts ~ tm + tm2)
+model0 <- lm(unemployment_ts ~ tm)
 lx0 <- ts(resid(model0), start = c(2011, 1), freq = 12)
 plot(lx0)
 
-acf(lx0)
-pacf(lx0)
+acf(lx0, lag.max=30)
+pacf(lx0, lag.max=30)
 
 # Select candidates for p,q,d -------------------------------------------------
-model0_sarima <- arima(lx0, order = c(1, 0, 0), seasonal = list(order = c(0, 1, 1)))
-
 auto.arima(lx0)
 
-# Model Selection -------------------------------------------------------------
-
-
 # Final Model Diagnostics -----------------------------------------------------
-tsdiag(model0_sarima)
+qqnorm(resid(model2)) # plot to check normality
+qqline(resid(model2))
 
-qqnorm(resid(model0_sarima)) # plot to check normality
-qqline(resid(model0_sarima))
+shapiro.test(resid(model2)) # Shapiro-Wilk test (homoscedasticity)
+runs(resid(model2)) # runs test (independence)
 
-shapiro.test(resid(model0_sarima)) # Shapiro-Wilk test (homoscedasticity)
-runs.test(resid(model0_sarima)) # runs test (independence)
-
-acf(resid(model0_sarima)) # ACF plot (independence)
+acf(resid(model2), lag.max=30) # ACF plot (independence)
