@@ -21,15 +21,16 @@ abline(h = 0)
 
 # Deterministic Trend: Assumption Checking ------------------------------------
 model1 <- lm(unemployment$MIHOUG1URN ~ unemployment$DATE) # linear regression model
-plot(rstandard(model1), type="l") # time series of residuals
+plot(rstandard(model1), type="l", main = "Time Series Residuals") # time series of residuals
 abline(h = 0, col = 2)
-hist(resid(model1))
+hist(resid(model1), main = "Histogram of Residuals")
+summary(model1)
 
 qqnorm(resid(model1)) # plot to check normality
 qqline(resid(model1))
 
 shapiro.test(resid(model1)) # Shapiro-Wilk test (homoscedasticity)
-runs.test(resid(model1)) # runs test (independence)
+runs(resid(model1)) # runs test (independence)
 
 acf(resid(model1)) # ACF plot (independence)
 
@@ -40,13 +41,15 @@ tm <- time(unemployment_ts)
 model2 <- lm(unemployment_ts ~ month + tm)
 
 lx1 <- ts(resid(model2), start = c(2011, 1), freq = 12)
-plot(lx1)
+plot(lx1, main = "Residual Time Series at Lag 1")
 
 summary(model2)
 
 # Cosine trends model ---------------------------------------------------------
 har <- harmonic(unemployment_ts, 1)
 model3 <- lm(unemployment_ts ~ har + tm)
+lx1 <- ts(resid(model3), start = c(2011, 1), freq = 12)
+plot(lx1, main = "Residual Time Series at Lag 1")
 summary(model3)
 
 # SARIMA ----------------------------------------------------------------------
@@ -69,3 +72,11 @@ shapiro.test(resid(model2)) # Shapiro-Wilk test (homoscedasticity)
 runs(resid(model2)) # runs test (independence)
 
 acf(resid(model2), lag.max=30) # ACF plot (independence)
+
+# trying to plot model over data
+modelt <- lm(unemployment_ts ~ as.numeric(tm))
+plot(unemployment,
+     main = "Monthly Unemployment Rates in Houghton County",
+     xlab = "Time", ylab = "Unemployment Rate"
+)
+abline(modelt, lty=1,col="black")
