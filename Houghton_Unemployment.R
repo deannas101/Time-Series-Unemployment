@@ -1,5 +1,7 @@
 library(AICcmodavg)
 library(forecast)
+library(lubridate)
+library(tidyverse)
 library(TSA)
 
 # Data Importing from CSV -----------------------------------------------------
@@ -74,9 +76,19 @@ runs(resid(model2)) # runs test (independence)
 acf(resid(model2), lag.max = 30) # ACF plot (independence)
 
 # trying to plot model over data
-modelt <- lm(unemployment_ts ~ as.numeric(tm))
+modelt <- lm(unemployment_ts ~ as.numeric(month) + tm)
 plot(unemployment,
   main = "Monthly Unemployment Rates in Houghton County",
   xlab = "Time", ylab = "Unemployment Rate"
 )
 abline(modelt, lty = 1, col = "black")
+
+# plot data by month
+
+unemployment <- unemployment %>% mutate(month = month(DATE))
+unem_month <- unemployment %>%
+  group_by(month) %>%
+  summarize(aver = mean(MIHOUG1URN))
+unem_month %>% ggplot(aes(x = month, y = aver)) +
+  geom_histogram(stat = "identity") +
+  labs(title = "Average Unemployment by Month", y = "Unemployment Rate", x = "Month")
